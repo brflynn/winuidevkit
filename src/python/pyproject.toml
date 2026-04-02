@@ -42,9 +42,9 @@ package = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/brflynn/pywinui"
-Repository = "https://github.com/brflynn/pywinui"
-Issues = "https://github.com/brflynn/pywinui/issues"
+Homepage = "https://github.com/brflynn/WinUIDevKit"
+Repository = "https://github.com/brflynn/WinUIDevKit"
+Issues = "https://github.com/brflynn/WinUIDevKit/issues"
 
 [project.scripts]
 pywinui = "pywinui.cli:main"

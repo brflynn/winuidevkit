@@ -4,15 +4,21 @@
 
 ## Quick Start
 
-```bash
-pip install pywinui          # 1. Install
-winuidev setup               # 2. One-time SDK install
-winuidev init MyApp          # 3. Scaffold a project
+```powershell
+# 1. Install (downloads from WinUIDevKit release — no clone needed)
+irm https://github.com/brflynn/WinUIDevKit/releases/latest/download/install.ps1 -OutFile install.ps1
+.\install.ps1 -Language python
+
+# 2. One-time: install Windows App SDK
+winuidev setup
+
+# 3. Create and run a project
+winuidev init MyApp
 cd MyApp
-winuidev run                 # 4. Launch the app
+winuidev run
 ```
 
-That's it — four commands from zero to a running WinUI3 window.
+That's it — no repo clone, no PyPI. Five commands from zero to a running WinUI3 window.
 
 ## Features
 

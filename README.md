@@ -4,9 +4,26 @@
 
 WinUIDevKit is an open-source toolkit that lets you create Windows desktop applications using WinUI3 and XAML from your preferred programming language. Write your UI in XAML, write your logic in Python, Rust, Go, Node.js, or Swift — WinUIDevKit handles the runtime bridge.
 
-## How It Works
+## Install
 
-Every language follows the same developer workflow:
+**One-liner** (interactive — prompts for your language):
+
+```powershell
+irm https://github.com/brflynn/WinUIDevKit/releases/latest/download/install.ps1 | iex
+```
+
+Or specify the language directly:
+
+```powershell
+irm https://github.com/brflynn/WinUIDevKit/releases/latest/download/install.ps1 -OutFile install.ps1
+.\install.ps1 -Language python
+```
+
+Or download a language pack zip manually from the [latest release](https://github.com/brflynn/WinUIDevKit/releases/latest).
+
+## Get Started
+
+Every language follows the same workflow after install:
 
 ```bash
 winuidev setup       # one-time: install Windows App SDK
@@ -16,17 +33,17 @@ winuidev run         # launch the app
 winuidev build       # package for distribution
 ```
 
-Under the hood, each language pack implements the same four components — Bootstrap, XAML Loader, Binder, and CLI — using the best available bridge for that language. Where an existing public bridge exists (pythonnet, windows-rs, swift-winrt), we use it. Where none exists (Go WinRT, Node.js WinRT), WinUIDevKit provides a new minimal bridge.
-
 ## Supported Languages
 
-| Language | Bridge | Status | Quick Start |
-|----------|--------|--------|-------------|
-| **[Python](src/python/README.md)** | [pythonnet](https://github.com/pythonnet/pythonnet) (existing) | ✅ Released | `pip install pywinui` |
-| **[Rust](src/rust/README.md)** | [windows-rs](https://github.com/microsoft/windows-rs) (existing) | 🚧 In Progress | `cargo add winuidevkit` |
-| **[Go](src/go/README.md)** | [go-ole](https://github.com/go-ole/go-ole) + new WinRT projection | 🚧 In Progress | `go get winuidevkit` |
-| **[Node.js](src/nodejs/README.md)** | New N-API C++/WinRT addon | 🚧 In Progress | `npm install winuidevkit` |
-| **[Swift](src/swift/README.md)** | [swift-winrt](https://github.com/thebrowsercompany/swift-winrt) (existing) | 🚧 In Progress | `swift package add winuidevkit` |
+| Language | Bridge | Status | Guide |
+|----------|--------|--------|-------|
+| **[Python](src/python/README.md)** | [pythonnet](https://github.com/pythonnet/pythonnet) (existing) | ✅ Released | [Quick Start](src/python/README.md) |
+| **[Rust](src/rust/README.md)** | [windows-rs](https://github.com/microsoft/windows-rs) (existing) | 🚧 In Progress | [Quick Start](src/rust/README.md) |
+| **[Go](src/go/README.md)** | [go-ole](https://github.com/go-ole/go-ole) + new WinRT projection | 🚧 In Progress | [Quick Start](src/go/README.md) |
+| **[Node.js](src/nodejs/README.md)** | New N-API C++/WinRT addon | 🚧 In Progress | [Quick Start](src/nodejs/README.md) |
+| **[Swift](src/swift/README.md)** | [swift-winrt](https://github.com/thebrowsercompany/swift-winrt) (existing) | 🚧 In Progress | [Quick Start](src/swift/README.md) |
+
+Each release includes a zip per language containing the CLI, runtime, and SDK installer. No repo clone or package manager needed.
 
 ## Architecture
 
