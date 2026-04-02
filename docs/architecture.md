@@ -81,13 +81,12 @@ These are consumed by each language pack's CLI tooling during `init` and `build`
 ```
 WinUIDevKit/
 ├── src/
-│   ├── core/                    # Shared SDK installer, templates, manifests
-│   └── languagepacks/
-│       ├── python/              # pythonnet bridge (references pywinui)
-│       ├── rust/                # windows-rs bridge
-│       ├── go/                  # go-ole + NEW WinRT projection
-│       ├── nodejs/              # NEW N-API C++/WinRT addon
-│       └── swift/               # swift-winrt bridge
+│   ├── core/        # Shared SDK installer, templates, manifests
+│   ├── python/      # Python language pack (fully working)
+│   ├── rust/        # Rust language pack (windows-rs)
+│   ├── go/          # Go language pack (go-ole + WinRT projection)
+│   ├── nodejs/      # Node.js language pack (N-API addon)
+│   └── swift/       # Swift language pack (swift-winrt)
 ├── examples/
 │   ├── python-helloworld/
 │   ├── rust-helloworld/

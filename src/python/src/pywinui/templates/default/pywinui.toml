@@ -1,0 +1,7 @@
+[project]
+name = "{{PROJECT_NAME}}"
+
+[app]
+xaml = "app/MainWindow.xaml"
+codebehind = "app.main:MainWindow"
+entry = "app/main.py"

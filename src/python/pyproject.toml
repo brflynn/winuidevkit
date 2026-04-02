@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pywinui"
+version = "0.1.0"
+description = "XAML-first Python framework for building native WinUI3 desktop apps"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "pywinui contributors"}
+]
+keywords = ["winui", "winui3", "xaml", "desktop", "gui", "windows"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows :: Windows 10",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: User Interfaces",
+]
+dependencies = [
+    "click>=8.0",
+    "toml>=0.10",
+    "pythonnet>=3.0.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1",
+]
+package = [
+    "pyinstaller>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/brflynn/pywinui"
+Repository = "https://github.com/brflynn/pywinui"
+Issues = "https://github.com/brflynn/pywinui/issues"
+
+[project.scripts]
+pywinui = "pywinui.cli:main"
+winuidev = "pywinui.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pywinui = ["templates/**/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

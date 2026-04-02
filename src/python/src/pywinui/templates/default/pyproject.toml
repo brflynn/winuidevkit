@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "{{PROJECT_NAME}}"
+version = "0.1.0"
+description = "A WinUI3 desktop app built with pywinui"
+requires-python = ">=3.10"
+dependencies = [
+    "pywinui",
+]

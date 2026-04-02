@@ -1,17 +1,38 @@
 # WinUIDevKit
 
-**Native WinUI3 desktop apps from any language.**
+**Build native WinUI3 desktop apps from any language.**
 
-WinUIDevKit provides language packs that let developers build XAML-first WinUI3 apps
-using their preferred programming language — Python, Rust, Go, Node.js, and more.
+WinUIDevKit is an open-source toolkit that lets you create Windows desktop applications using WinUI3 and XAML from your preferred programming language. Write your UI in XAML, write your logic in Python, Rust, Go, Node.js, or Swift — WinUIDevKit handles the runtime bridge.
+
+## How It Works
+
+Every language follows the same developer workflow:
+
+```bash
+winuidev setup       # one-time: install Windows App SDK
+winuidev init MyApp  # scaffold a new project
+cd MyApp
+winuidev run         # launch the app
+winuidev build       # package for distribution
+```
+
+Under the hood, each language pack implements the same four components — Bootstrap, XAML Loader, Binder, and CLI — using the best available bridge for that language. Where an existing public bridge exists (pythonnet, windows-rs, swift-winrt), we use it. Where none exists (Go WinRT, Node.js WinRT), WinUIDevKit provides a new minimal bridge.
+
+## Supported Languages
+
+| Language | Bridge | Status | Quick Start |
+|----------|--------|--------|-------------|
+| **[Python](src/python/README.md)** | [pythonnet](https://github.com/pythonnet/pythonnet) (existing) | ✅ Released | `pip install pywinui` |
+| **[Rust](src/rust/README.md)** | [windows-rs](https://github.com/microsoft/windows-rs) (existing) | 🚧 In Progress | `cargo add winuidevkit` |
+| **[Go](src/go/README.md)** | [go-ole](https://github.com/go-ole/go-ole) + new WinRT projection | 🚧 In Progress | `go get winuidevkit` |
+| **[Node.js](src/nodejs/README.md)** | New N-API C++/WinRT addon | 🚧 In Progress | `npm install winuidevkit` |
+| **[Swift](src/swift/README.md)** | [swift-winrt](https://github.com/thebrowsercompany/swift-winrt) (existing) | 🚧 In Progress | `swift package add winuidevkit` |
 
 ## Architecture
 
-Every language follows the same pattern:
-
 ```
 ┌─────────────────────────────────────────────────┐
-│  Your App Code (Python / Rust / Go / Node.js)   │
+│  Your App Code (Python / Rust / Go / Node / Swift)│
 ├─────────────────────────────────────────────────┤
 │  Language Pack                                   │
 │  ┌──────────┐ ┌────────┐ ┌──────────┐ ┌──────┐ │
@@ -19,58 +40,10 @@ Every language follows the same pattern:
 │  │          │ │ Loader  │ │ (x:Name) │ │      │ │
 │  └──────────┘ └────────┘ └──────────┘ └──────┘ │
 ├─────────────────────────────────────────────────┤
-│  Core (shared XAML templates, SDK scripts, CI)   │
+│  Bridge (pythonnet / windows-rs / N-API / etc.)  │
 ├─────────────────────────────────────────────────┤
-│  Windows App SDK 1.8  (WinRT / COM)              │
-├─────────────────────────────────────────────────┤
-│  Windows 10/11                                   │
+│  Windows App SDK 1.8  ·  WinUI3  ·  WinRT/COM   │
 └─────────────────────────────────────────────────┘
-```
-
-Each language pack implements four components:
-
-| Component | What it does |
-|-----------|-------------|
-| **Bootstrap** | Initialize Windows App Runtime (DDLM), load assemblies/DLLs |
-| **XAML Loader** | Parse XAML files, call `XamlReader.Load()` via the language's WinRT/COM bridge |
-| **Binder** | Map `x:Name` elements to language-native constructs + wire events |
-| **CLI** | `init` / `run` / `build` commands for the developer workflow |
-
-## Language Packs
-
-| Language | Status | Bridge Technology | Package |
-|----------|--------|-------------------|---------|
-| [Python](src/languagepacks/python/) | ✅ Released | pythonnet (CoreCLR) | `pip install winuidevkit-python` |
-| [Rust](src/languagepacks/rust/) | 🚧 In Progress | windows-rs (COM/WinRT) | `cargo add winuidevkit` |
-| [Go](src/languagepacks/go/) | 🚧 In Progress | go-ole + go-winrt | `go get winuidevkit` |
-| [Node.js](src/languagepacks/nodejs/) | 📋 Planned | node-ffi / N-API | `npm install winuidevkit` |
-| [Kotlin](src/languagepacks/kotlin/) | 📋 Planned | Kotlin/Native + COM | Maven |
-| [Java](src/languagepacks/java/) | 📋 Planned | JNA + COM | Maven |
-| [Swift](src/languagepacks/swift/) | 📋 Planned | C interop + COM | SPM |
-
-## Quick Start (any language)
-
-The workflow is the same regardless of language:
-
-```bash
-# 1. Install the language pack
-pip install winuidevkit-python          # Python
-cargo install winuidevkit-cli           # Rust
-go install winuidevkit/cmd/winui@latest # Go
-npm install -g winuidevkit              # Node.js
-
-# 2. One-time setup (downloads Windows App SDK)
-winui setup
-
-# 3. Scaffold a project
-winui init MyApp
-cd MyApp
-
-# 4. Run it
-winui run
-
-# 5. Package for distribution
-winui build
 ```
 
 ## Repo Structure
@@ -78,49 +51,21 @@ winui build
 ```
 WinUIDevKit/
   src/
-    core/                          # Shared across all languages
-      sdk/                         # SDK discovery + installer scripts
-      xaml-templates/              # Starter XAML files
-      manifests/                   # AppxManifest templates
-      ci/                          # Reusable CI/CD workflows
-    languagepacks/
-      python/                      # Python language pack (pywinui)
-      rust/                        # Rust language pack
-      go/                          # Go language pack
-      nodejs/                      # Node.js language pack
-      kotlin/                      # Kotlin language pack (planned)
-      java/                        # Java language pack (planned)
-      swift/                       # Swift language pack (planned)
-  examples/
-    python-helloworld/
-    rust-helloworld/
-    go-helloworld/
-    nodejs-helloworld/
-  docs/
-    architecture.md
-    adding-a-language.md
-    bootstrap-protocol.md
+    core/           # Shared SDK installer, XAML templates, MSIX manifests
+    python/         # Python language pack (fully working)
+    rust/           # Rust language pack (windows-rs)
+    go/             # Go language pack (go-ole + WinRT projection)
+    nodejs/         # Node.js language pack (N-API addon)
+    swift/          # Swift language pack (swift-winrt)
+  examples/         # HelloWorld per language
+  docs/             # Architecture, bootstrap protocol, contributor guide
 ```
 
-## How Languages Talk to WinUI3
+## Documentation
 
-The Windows App SDK exposes everything via COM/WinRT interfaces. Each language
-reaches those interfaces differently:
-
-| Language | Mechanism | Key Dependency |
-|----------|-----------|----------------|
-| Python | .NET interop via pythonnet → CsWinRT projections | pythonnet 3.x + CoreCLR |
-| Rust | Direct WinRT/COM via `windows` crate | microsoft/windows-rs |
-| Go | COM vtable calls via `go-ole` | go-ole/go-ole |
-| Node.js | N-API native addon wrapping C++/WinRT | Custom C++ addon |
-| Kotlin | Kotlin/Native calling COM via cinterop | Kotlin/Native compiler |
-| Java | JNA mapping COM vtables | net.java.dev.jna |
-| Swift | C bridging header → COM vtables | Swift on Windows toolchain |
-
-## Contributing
-
-See [docs/adding-a-language.md](docs/adding-a-language.md) for the step-by-step
-guide to adding a new language pack.
+- [Architecture](docs/architecture.md) — the four-component pattern and bridge layer
+- [Bootstrap Protocol](docs/bootstrap-protocol.md) — how WinAppSDK initialization works
+- [Adding a Language](docs/adding-a-language.md) — guide for contributing a new language pack
 
 ## License
 

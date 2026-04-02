@@ -16,7 +16,7 @@ Before writing any code, determine whether an existing WinRT bridge exists for y
 ## Step 2: Create the Language Pack Directory
 
 ```
-src/languagepacks/<language>/
+src/<language>/
 ├── README.md           # Bridge info, prerequisites, architecture
 ├── <package-config>    # Cargo.toml, package.json, go.mod, etc.
 └── src/
