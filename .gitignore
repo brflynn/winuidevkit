@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+packages/
+target/
+.build/
+__pycache__/
+*.pyc
+dist/
+build/
+*.egg-info/
+
+# IDE
+.vs/
+.vscode/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Build artifacts
+*.node
+*.dll
+*.exe
+*.obj
+*.o
+*.pdb

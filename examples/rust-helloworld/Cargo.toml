@@ -1,0 +1,8 @@
+[package]
+name = "rust-helloworld"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+winuidevkit = { path = "../../src/languagepacks/rust" }
+windows = { version = "0.58", features = ["Foundation"] }

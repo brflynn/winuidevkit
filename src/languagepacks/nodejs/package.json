@@ -1,0 +1,29 @@
+{
+  "name": "winuidevkit",
+  "version": "0.1.0",
+  "description": "WinUIDevKit Node.js language pack – WinUI3 apps with JavaScript/TypeScript + XAML",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "cmake-js compile && tsc",
+    "test": "node --test test/"
+  },
+  "bin": {
+    "winui": "dist/cli.js"
+  },
+  "dependencies": {
+    "cmake-js": "^7.0.0",
+    "node-addon-api": "^8.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5",
+    "@types/node": "^22"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brflynn/WinUIDevKit"
+  },
+  "os": ["win32"],
+  "cpu": ["x64", "arm64"]
+}

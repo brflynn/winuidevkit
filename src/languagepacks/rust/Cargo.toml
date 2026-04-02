@@ -1,0 +1,22 @@
+[package]
+name = "winuidevkit"
+version = "0.1.0"
+edition = "2021"
+description = "WinUIDevKit Rust language pack – WinUI3 apps with Rust + XAML"
+license = "MIT"
+repository = "https://github.com/brflynn/WinUIDevKit"
+
+[dependencies]
+windows = { version = "0.58", features = [
+    "Foundation",
+    "Microsoft_UI_Xaml",
+    "Microsoft_UI_Xaml_Controls",
+    "Microsoft_UI_Xaml_Markup",
+    "Microsoft_UI_Xaml_Input",
+    "Microsoft_Windows_ApplicationModel_DynamicDependency",
+    "implement",
+]}
+clap = { version = "4", features = ["derive"] }
+
+[build-dependencies]
+windows-bindgen = "0.58"

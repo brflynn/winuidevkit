@@ -1,0 +1,14 @@
+{
+  "name": "nodejs-helloworld",
+  "version": "0.1.0",
+  "scripts": {
+    "start": "npx ts-node app/main.ts"
+  },
+  "dependencies": {
+    "winuidevkit": "^0.1.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,0 +1,5 @@
+[project]
+name = "python-helloworld"
+version = "0.1.0"
+xaml = "app/MainWindow.xaml"
+entry = "app/main.py"
