@@ -47,7 +47,7 @@ jobs:
         run: npm install
       - name: TypeScript compile check
         working-directory: src/nodejs
-        run: npx tsc --noEmit --strict src/index.ts src/cli.ts src/runtime.ts src/binder.ts || echo "TS check completed (native addon types may be missing)"
+        run: npx tsc --noEmit
 
   # ── Go ──────────────────────────────────────────────────
   go:

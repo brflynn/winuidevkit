@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "cmake-js": "^7.0.0",
+    "commander": "^12.0.0",
     "node-addon-api": "^8.0.0"
   },
   "devDependencies": {
