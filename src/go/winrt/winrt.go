@@ -58,6 +58,8 @@ func (hs HSTRING) String() string {
 	if buf == 0 {
 		return ""
 	}
+	// buf is a uintptr from a syscall — the unsafe.Pointer conversion is safe
+	// because the buffer is owned by the HSTRING and outlives this scope.
 	u16 := unsafe.Slice((*uint16)(unsafe.Pointer(buf)), length)
 	return syscall.UTF16ToString(u16)
 }
