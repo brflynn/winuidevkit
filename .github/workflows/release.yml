@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  # ── Build Python pack ───────────────────────────────────────────────────
-  build-python:
+  # ── Build all language packs ────────────────────────────────────────────
+  build:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,170 +19,85 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Install build tools
-        run: pip install build
-
-      - name: Build wheel
-        working-directory: src/python
-        run: python -m build --wheel
-
-      - name: Run tests
+      - name: Build Python wheel
         working-directory: src/python
         run: |
-          pip install -e ".[dev]"
-          pytest tests/ -v
+          pip install build
+          python -m build --wheel
 
-      - name: Package Python zip
+      # ── Package each language zip ──────────────────────────────────────
+      - name: Package all language zips
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Path staging/python -Force
-          Copy-Item src/python/dist/*.whl staging/python/
-          Copy-Item src/core/sdk/Install-WinAppSdk.ps1 staging/python/
-          Compress-Archive -Path staging/python/* -DestinationPath winuidevkit-python.zip
+          $tag = "${{ github.ref_name }}"
+          $out = "release"
+          New-Item -ItemType Directory -Path $out -Force
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: winuidevkit-python
-          path: winuidevkit-python.zip
-
-  # ── Build Rust pack ─────────────────────────────────────────────────────
-  build-rust:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - name: Build Rust CLI
-        working-directory: src/rust
-        run: cargo build --release
-        continue-on-error: true  # May fail until full CLI is implemented
-
-      - name: Package Rust zip
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path staging/rust -Force
-          # Include prebuilt binary if it exists
-          $exe = Get-ChildItem src/rust/target/release -Filter "*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($exe) { Copy-Item $exe.FullName staging/rust/winuidev.exe }
-          # Include source for cargo projects
-          Copy-Item src/rust/Cargo.toml staging/rust/
-          Copy-Item src/rust/src staging/rust/src -Recurse
-          Copy-Item src/core/sdk/Install-WinAppSdk.ps1 staging/rust/
-          Compress-Archive -Path staging/rust/* -DestinationPath winuidevkit-rust.zip
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: winuidevkit-rust
-          path: winuidevkit-rust.zip
-
-  # ── Build Go pack ───────────────────────────────────────────────────────
-  build-go:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.21'
-
-      - name: Build Go CLI
-        working-directory: src/go
-        run: go build -o winuidev.exe ./...
-        continue-on-error: true  # May fail until full CLI is implemented
-
-      - name: Package Go zip
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path staging/go -Force
-          $exe = Get-ChildItem src/go -Filter "winuidev.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($exe) { Copy-Item $exe.FullName staging/go/winuidev.exe }
-          Copy-Item src/go/go.mod staging/go/
-          Copy-Item src/go/winrt staging/go/winrt -Recurse
-          Copy-Item src/go/bootstrap staging/go/bootstrap -Recurse
-          Copy-Item src/core/sdk/Install-WinAppSdk.ps1 staging/go/
-          Compress-Archive -Path staging/go/* -DestinationPath winuidevkit-go.zip
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: winuidevkit-go
-          path: winuidevkit-go.zip
-
-  # ── Build Node.js pack ─────────────────────────────────────────────────
-  build-nodejs:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install and build
-        working-directory: src/nodejs
-        run: npm install
-        continue-on-error: true
-
-      - name: Package Node.js zip
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path staging/nodejs -Force
-          # Include npm tarball if built, otherwise include source
-          $tgz = Get-ChildItem src/nodejs -Filter "*.tgz" -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($tgz) {
-            Copy-Item $tgz.FullName staging/nodejs/
-          } else {
-            Copy-Item src/nodejs/package.json staging/nodejs/
-            Copy-Item src/nodejs/src staging/nodejs/src -Recurse
+          # --- Helper: stage shared files into a language staging dir ---
+          function Stage-Shared($dir) {
+            Copy-Item scripts/winuidev.ps1 $dir
+            # .cmd wrapper for winuidev
+            "@echo off`r`npowershell.exe -NoProfile -ExecutionPolicy Bypass -File `"%~dp0winuidev.ps1`" %*" |
+              Set-Content (Join-Path $dir "winuidev.cmd") -Encoding ASCII
+            # SDK installer
+            $sdk = Join-Path $dir "sdk"
+            New-Item -ItemType Directory -Path $sdk -Force | Out-Null
+            Copy-Item src/core/sdk/Install-WinAppSdk.ps1 $sdk
+            # XAML templates
+            Copy-Item src/core/xaml-templates $dir/xaml-templates -Recurse
+            Copy-Item src/core/manifests      $dir/manifests -Recurse
           }
-          Copy-Item src/core/sdk/Install-WinAppSdk.ps1 staging/nodejs/
-          Compress-Archive -Path staging/nodejs/* -DestinationPath winuidevkit-nodejs.zip
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: winuidevkit-nodejs
-          path: winuidevkit-nodejs.zip
+          # ── Python ──────────────────────────────────────────────────
+          $s = "staging/python"; New-Item -ItemType Directory $s -Force | Out-Null
+          Copy-Item src/python/dist/*.whl $s/
+          Stage-Shared $s
+          Copy-Item examples/python-helloworld $s/template -Recurse
+          Compress-Archive "$s/*" "$out/winuidevkit-python.zip"
 
-  # ── Build Swift pack ────────────────────────────────────────────────────
-  build-swift:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
+          # ── Rust ────────────────────────────────────────────────────
+          $s = "staging/rust"; New-Item -ItemType Directory $s -Force | Out-Null
+          Copy-Item src/rust/Cargo.toml $s/
+          Copy-Item src/rust/src $s/src -Recurse
+          Copy-Item src/rust/README.md $s/
+          Stage-Shared $s
+          Copy-Item examples/rust-helloworld $s/template -Recurse
+          Compress-Archive "$s/*" "$out/winuidevkit-rust.zip"
 
-      - name: Package Swift zip
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path staging/swift -Force
-          Copy-Item src/swift/Package.swift staging/swift/
-          Copy-Item src/swift/Sources staging/swift/Sources -Recurse
-          Copy-Item src/core/sdk/Install-WinAppSdk.ps1 staging/swift/
-          Compress-Archive -Path staging/swift/* -DestinationPath winuidevkit-swift.zip
+          # ── Go ──────────────────────────────────────────────────────
+          $s = "staging/go"; New-Item -ItemType Directory $s -Force | Out-Null
+          Copy-Item src/go/go.mod $s/
+          Copy-Item src/go/bootstrap $s/bootstrap -Recurse
+          Copy-Item src/go/winrt     $s/winrt -Recurse
+          Copy-Item src/go/README.md $s/
+          Stage-Shared $s
+          Copy-Item examples/go-helloworld $s/template -Recurse
+          Compress-Archive "$s/*" "$out/winuidevkit-go.zip"
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: winuidevkit-swift
-          path: winuidevkit-swift.zip
+          # ── Node.js ────────────────────────────────────────────────
+          $s = "staging/nodejs"; New-Item -ItemType Directory $s -Force | Out-Null
+          Copy-Item src/nodejs/package.json $s/
+          Copy-Item src/nodejs/tsconfig.json $s/
+          Copy-Item src/nodejs/src $s/src -Recurse
+          Copy-Item src/nodejs/CMakeLists.txt $s/
+          Copy-Item src/nodejs/README.md $s/
+          Stage-Shared $s
+          Copy-Item examples/nodejs-helloworld $s/template -Recurse
+          Compress-Archive "$s/*" "$out/winuidevkit-nodejs.zip"
 
-  # ── Create GitHub Release ───────────────────────────────────────────────
-  release:
-    needs: [build-python, build-rust, build-go, build-nodejs, build-swift]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+          # ── Swift ──────────────────────────────────────────────────
+          $s = "staging/swift"; New-Item -ItemType Directory $s -Force | Out-Null
+          Copy-Item src/swift/Package.swift $s/
+          Copy-Item src/swift/Sources $s/Sources -Recurse
+          Copy-Item src/swift/README.md $s/
+          Stage-Shared $s
+          Copy-Item examples/swift-helloworld $s/template -Recurse
+          Compress-Archive "$s/*" "$out/winuidevkit-swift.zip"
 
-      - uses: actions/download-artifact@v4
-        with:
-          path: artifacts
+          # ── install.ps1 ────────────────────────────────────────────
+          Copy-Item scripts/install.ps1 $out/
 
-      - name: Collect release assets
-        run: |
-          mkdir -p release
-          cp artifacts/winuidevkit-python/winuidevkit-python.zip release/
-          cp artifacts/winuidevkit-rust/winuidevkit-rust.zip release/
-          cp artifacts/winuidevkit-go/winuidevkit-go.zip release/
-          cp artifacts/winuidevkit-nodejs/winuidevkit-nodejs.zip release/
-          cp artifacts/winuidevkit-swift/winuidevkit-swift.zip release/
-          cp scripts/install.ps1 release/
+          Get-ChildItem $out | ForEach-Object { Write-Host "$($_.Name) ($([math]::Round($_.Length/1KB)) KB)" }
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -200,19 +115,16 @@ jobs:
 
             **One-liner (interactive — picks your language):**
             ```powershell
-            irm https://github.com/brflynn/WinUIDevKit/releases/download/${{ github.ref_name }}/install.ps1 | iex
+            irm https://github.com/brflynn/WinUIDevKit/releases/latest/download/install.ps1 | iex
             ```
 
-            **Or download the zip for your language directly:**
-            | Language | Download |
-            |----------|----------|
-            | Python | `winuidevkit-python.zip` |
-            | Rust | `winuidevkit-rust.zip` |
-            | Go | `winuidevkit-go.zip` |
-            | Node.js | `winuidevkit-nodejs.zip` |
-            | Swift | `winuidevkit-swift.zip` |
+            **Or specify directly:**
+            ```powershell
+            irm https://github.com/brflynn/WinUIDevKit/releases/latest/download/install.ps1 -OutFile install.ps1
+            .\install.ps1 -Language python
+            ```
 
-            Then run:
+            Then:
             ```
             winuidev setup
             winuidev init MyApp

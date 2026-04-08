@@ -27,3 +27,4 @@ Desktop.ini
 *.obj
 *.o
 *.pdb
+release-artifacts/

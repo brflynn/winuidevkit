@@ -109,6 +109,10 @@ Remove-Item $tempZip -Force
 $binDir = Join-Path $InstallDir "bin"
 New-Item -ItemType Directory -Path $binDir -Force | Out-Null
 
+# Store install location so the CLI can find templates + SDK scripts
+[Environment]::SetEnvironmentVariable("WINUIDEVKIT_HOME", $langDir, "User")
+$env:WINUIDEVKIT_HOME = $langDir
+
 switch ($Language) {
     "python" {
         # Install the wheel into the user's Python environment
@@ -126,45 +130,28 @@ switch ($Language) {
         Write-Host "Python pack installed. CLI available as 'winuidev' and 'pywinui'."
     }
 
-    "rust" {
-        # Copy prebuilt binary
-        $exe = Get-ChildItem $langDir -Filter "winuidev.exe" -Recurse | Select-Object -First 1
-        if ($exe) {
-            Copy-Item $exe.FullName (Join-Path $binDir "winuidev.exe") -Force
-            Write-Host "Rust CLI binary installed to $binDir\winuidev.exe"
-        }
-    }
+    default {
+        # All non-Python languages use the PowerShell CLI wrapper
+        $cliScript = Get-ChildItem $langDir -Filter "winuidev.ps1" -Recurse | Select-Object -First 1
+        if ($cliScript) {
+            Copy-Item $cliScript.FullName (Join-Path $binDir "winuidev.ps1") -Force
 
-    "go" {
-        $exe = Get-ChildItem $langDir -Filter "winuidev.exe" -Recurse | Select-Object -First 1
-        if ($exe) {
-            Copy-Item $exe.FullName (Join-Path $binDir "winuidev.exe") -Force
-            Write-Host "Go CLI binary installed to $binDir\winuidev.exe"
-        }
-    }
+            # Create a .cmd wrapper so 'winuidev' works from cmd/powershell
+            $cmdContent = "@echo off`r`npowershell.exe -NoProfile -ExecutionPolicy Bypass -File `"%~dp0winuidev.ps1`" %*"
+            Set-Content (Join-Path $binDir "winuidev.cmd") -Value $cmdContent -Encoding ASCII
 
-    "nodejs" {
-        # Install the tarball globally via npm
-        $tgz = Get-ChildItem $langDir -Filter "*.tgz" -Recurse | Select-Object -First 1
-        if ($tgz) {
-            Write-Host "Installing Node.js package: $($tgz.Name)"
-            & npm install -g $tgz.FullName --quiet 2>&1 | Out-Null
-            Write-Host "Node.js pack installed globally."
+            Write-Host "$Language CLI installed to $binDir\winuidev.cmd"
         }
         else {
-            # Fallback: prebuilt binary
+            # Legacy: try prebuilt binary
             $exe = Get-ChildItem $langDir -Filter "winuidev.exe" -Recurse | Select-Object -First 1
             if ($exe) {
                 Copy-Item $exe.FullName (Join-Path $binDir "winuidev.exe") -Force
+                Write-Host "$Language CLI binary installed to $binDir\winuidev.exe"
             }
-        }
-    }
-
-    "swift" {
-        $exe = Get-ChildItem $langDir -Filter "winuidev.exe" -Recurse | Select-Object -First 1
-        if ($exe) {
-            Copy-Item $exe.FullName (Join-Path $binDir "winuidev.exe") -Force
-            Write-Host "Swift CLI binary installed to $binDir\winuidev.exe"
+            else {
+                Write-Warning "No CLI found in the language pack. You may need to update WinUIDevKit."
+            }
         }
     }
 }
