@@ -1,8 +1,8 @@
 //! XAML Loader — parse XAML strings via XamlReader::Load().
 
 use windows::core::{Result, HSTRING};
-use windows::Microsoft::UI::Xaml::Markup::XamlReader;
-use windows::Microsoft::UI::Xaml::UIElement;
+use crate::bindings::Microsoft::UI::Xaml::Markup::XamlReader;
+use crate::bindings::Microsoft::UI::Xaml::UIElement;
 
 /// Load a XAML string and return the root UIElement.
 pub fn load_xaml(xaml: &str) -> Result<UIElement> {

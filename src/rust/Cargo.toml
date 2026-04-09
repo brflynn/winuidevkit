@@ -9,11 +9,6 @@ repository = "https://github.com/brflynn/WinUIDevKit"
 [dependencies]
 windows = { version = "0.58", features = [
     "Foundation",
-    "Microsoft_UI_Xaml",
-    "Microsoft_UI_Xaml_Controls",
-    "Microsoft_UI_Xaml_Markup",
-    "Microsoft_UI_Xaml_Input",
-    "Microsoft_Windows_ApplicationModel_DynamicDependency",
     "implement",
 ]}
 clap = { version = "4", features = ["derive"] }

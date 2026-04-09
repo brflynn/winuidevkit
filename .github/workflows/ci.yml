@@ -27,6 +27,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - name: Download WinAppSDK metadata
+        working-directory: src/rust
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path metadata | Out-Null
+          $temp = Join-Path $env:RUNNER_TEMP "nuget-winapp"
+          nuget install Microsoft.WindowsAppSDK -OutputDirectory $temp -NonInteractive
+          Get-ChildItem -Path $temp -Recurse -Filter "*.winmd" |
+              Copy-Item -Destination metadata/ -Force
+          Remove-Item $temp -Recurse -Force
       - name: Check Rust language pack
         working-directory: src/rust
         run: cargo check
