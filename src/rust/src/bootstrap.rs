@@ -4,7 +4,7 @@
 //! This is the Rust equivalent of the Python `ensure_windows_app_runtime()`.
 
 use windows::core::Result;
-use windows::Microsoft::Windows::ApplicationModel::DynamicDependency::Bootstrap;
+use crate::bindings::Microsoft::Windows::ApplicationModel::DynamicDependency::Bootstrap;
 
 const SDK_VERSION_MAJOR_MINOR: u32 = 0x00010008; // 1.8
 

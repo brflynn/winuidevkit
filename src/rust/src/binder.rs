@@ -4,7 +4,7 @@
 //! and a macro to generate typed binder structs.
 
 use windows::core::{Result, HSTRING};
-use windows::Microsoft::UI::Xaml::{DependencyObject, FrameworkElement};
+use crate::bindings::Microsoft::UI::Xaml::{DependencyObject, FrameworkElement};
 
 /// Find a named element within a XAML tree by its x:Name.
 pub fn find_named_element(root: &FrameworkElement, name: &str) -> Result<Option<DependencyObject>> {
@@ -60,7 +60,7 @@ macro_rules! winui_view {
         }
 
         impl $name {
-            pub fn bind(root: &::windows::Microsoft::UI::Xaml::FrameworkElement) -> ::windows::core::Result<Self> {
+            pub fn bind(root: &$crate::bindings::Microsoft::UI::Xaml::FrameworkElement) -> ::windows::core::Result<Self> {
                 Ok(Self {
                     $($field: {
                         let name = stringify!($field);
