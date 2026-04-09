@@ -113,6 +113,11 @@ New-Item -ItemType Directory -Path $binDir -Force | Out-Null
 [Environment]::SetEnvironmentVariable("WINUIDEVKIT_HOME", $langDir, "User")
 $env:WINUIDEVKIT_HOME = $langDir
 
+# Persist the chosen language so 'winuidev init' doesn't need -Language
+[Environment]::SetEnvironmentVariable("WINUIDEVKIT_LANGUAGE", $Language, "User")
+$env:WINUIDEVKIT_LANGUAGE = $Language
+Set-Content (Join-Path $InstallDir ".language") -Value $Language -NoNewline
+
 switch ($Language) {
     "python" {
         # Install the wheel into the user's Python environment

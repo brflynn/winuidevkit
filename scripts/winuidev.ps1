@@ -42,6 +42,13 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# ── Refresh PATH from registry ───────────────────────────────────────────
+# The .cmd wrapper launches with -NoProfile, so recently-installed tools
+# (e.g. cargo via rustup, go, node) may not be on the session PATH yet.
+$machinePath = [Environment]::GetEnvironmentVariable("PATH", "Machine")
+$userPath    = [Environment]::GetEnvironmentVariable("PATH", "User")
+$env:PATH    = "$userPath;$machinePath"
+
 # ── Resolve install location ─────────────────────────────────────────────
 
 function Get-InstallHome {
@@ -143,7 +150,7 @@ function Invoke-Setup {
 
     Write-Host ""
     Write-Host "Setup complete!" -ForegroundColor Green
-    Write-Host "  winuidev init MyApp -Language <lang>"
+    Write-Host "  winuidev init MyApp     # scaffold a new project"
     Write-Host "  cd MyApp"
     Write-Host "  winuidev run"
 }
@@ -219,6 +226,33 @@ function _Check-LanguagePrereqs {
     }
 }
 
+# ── Installed-language lookup ─────────────────────────────────────────────
+
+function _Get-InstalledLanguage {
+    # 1. Environment variable set by install.ps1
+    $lang = [Environment]::GetEnvironmentVariable("WINUIDEVKIT_LANGUAGE", "User")
+    if ($lang -and $lang -in @("python","rust","go","nodejs","swift")) {
+        return $lang
+    }
+    # 2. .language file in the install directory
+    $installBase = Split-Path -Parent $PackHome
+    $langFile = Join-Path $installBase ".language"
+    if (Test-Path $langFile) {
+        $lang = (Get-Content $langFile -Raw).Trim()
+        if ($lang -in @("python","rust","go","nodejs","swift")) {
+            return $lang
+        }
+    }
+    # 3. Infer from WINUIDEVKIT_HOME path (last segment is the language)
+    if ($env:WINUIDEVKIT_HOME) {
+        $lang = Split-Path -Leaf $env:WINUIDEVKIT_HOME
+        if ($lang -in @("python","rust","go","nodejs","swift")) {
+            return $lang
+        }
+    }
+    return $null
+}
+
 # ── INIT command ─────────────────────────────────────────────────────────
 
 function Invoke-Init {
@@ -227,14 +261,27 @@ function Invoke-Init {
         exit 1
     }
     if (-not $Language) {
+        # Try to infer from install-time config
+        $Language = _Get-InstalledLanguage
+    }
+    if (-not $Language) {
         Write-Error "Please specify a language: winuidev init $Name -Language <python|rust|go|nodejs|swift>"
         exit 1
     }
 
     $dest = Join-Path (Get-Location) $Name
     if (Test-Path $dest) {
-        Write-Error "Directory '$Name' already exists."
-        exit 1
+        Write-Host "Directory '$Name' already exists — skipping scaffold." -ForegroundColor Yellow
+        Write-Host "Default language set to '$Language'." -ForegroundColor Green
+        # Persist the language choice so future commands use it
+        [Environment]::SetEnvironmentVariable("WINUIDEVKIT_LANGUAGE", $Language, "User")
+        $env:WINUIDEVKIT_LANGUAGE = $Language
+        $installBase = Split-Path -Parent $PackHome
+        $langFile = Join-Path $installBase ".language"
+        if (Test-Path (Split-Path $langFile)) {
+            Set-Content $langFile -Value $Language -NoNewline
+        }
+        return
     }
 
     Write-Host "Creating $Language project '$Name'..." -ForegroundColor Cyan
@@ -447,7 +494,7 @@ if (-not $Command) {
     Write-Host ""
     Write-Host "Commands:"
     Write-Host "  setup                         Install Windows App SDK + prerequisites"
-    Write-Host "  init <name> -Language <lang>   Scaffold a new project"
+    Write-Host "  init <name> [-Language <lang>]  Scaffold a new project"
     Write-Host "  run                            Launch the app in dev mode"
     Write-Host "  build                          Package for distribution"
     Write-Host "  doctor                         Check dependencies"
