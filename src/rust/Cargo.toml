@@ -11,7 +11,5 @@ windows = { version = "0.58", features = [
     "Foundation",
     "implement",
 ]}
+windows-core = "0.58"
 clap = { version = "4", features = ["derive"] }
-
-[build-dependencies]
-windows-bindgen = "0.58"

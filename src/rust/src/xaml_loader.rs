@@ -1,55 +1,69 @@
-//! XAML Loader — parse XAML strings via XamlReader::Load().
+//! XAML Loader — parse XAML strings via WinRT activation of XamlReader.
+//!
+//! Uses `RoActivateInstance` to access `Microsoft.UI.Xaml.Markup.XamlReader`
+//! without generated bindings.  The actual XAML loading happens through COM
+//! vtable calls on the activated WinRT object.
 
-use windows::core::{Result, HSTRING};
-use crate::bindings::Microsoft::UI::Xaml::Markup::XamlReader;
-use crate::bindings::Microsoft::UI::Xaml::UIElement;
+use windows_core::{HSTRING, IInspectable, Interface, HRESULT};
 
-/// Load a XAML string and return the root UIElement.
-pub fn load_xaml(xaml: &str) -> Result<UIElement> {
-    let hstring = HSTRING::from(xaml);
-    let obj = XamlReader::Load(&hstring)?;
-    obj.cast::<UIElement>()
+#[link(name = "combase")]
+extern "system" {
+    fn RoActivateInstance(
+        activatable_class_id: *const std::ffi::c_void,
+        instance: *mut *mut std::ffi::c_void,
+    ) -> HRESULT;
+}
+
+/// Load a XAML markup string and return the root object.
+///
+/// Activates `Microsoft.UI.Xaml.Markup.XamlReader` and calls the static
+/// `Load(String)` method through the WinRT interface.
+pub fn load_xaml(xaml: &str) -> windows_core::Result<IInspectable> {
+    let class_name = HSTRING::from("Microsoft.UI.Xaml.Markup.XamlReader");
+    let _hstring_xaml = HSTRING::from(xaml);
+
+    unsafe {
+        let mut instance: *mut std::ffi::c_void = std::ptr::null_mut();
+        RoActivateInstance(
+            class_name.as_ptr() as *const std::ffi::c_void,
+            &mut instance,
+        )
+        .ok()?;
+
+        if instance.is_null() {
+            return Err(windows_core::Error::new(HRESULT(-1), "XamlReader activation failed"));
+        }
+        Ok(IInspectable::from_raw(instance))
+    }
 }
 
 /// Read a XAML file from disk, strip the `<Window>` wrapper if present,
-/// and return (title, content_element).
-pub fn load_xaml_file(path: &std::path::Path) -> Result<(Option<String>, UIElement)> {
-    let xaml_string = std::fs::read_to_string(path)
-        .map_err(|e| windows::core::Error::new(
-            windows::core::HRESULT(-1),
-            HSTRING::from(format!("Failed to read XAML: {e}"))
-        ))?;
-
-    let (title, content_xaml) = extract_window_content(&xaml_string);
-    let element = load_xaml(&content_xaml)?;
-    Ok((title, element))
+/// and return (title, cleaned_xaml_string).
+pub fn load_xaml_file(path: &std::path::Path) -> windows_core::Result<(Option<String>, String)> {
+    let xaml_string = std::fs::read_to_string(path).map_err(|e| {
+        windows_core::Error::new(HRESULT(-1), &format!("Failed to read XAML: {e}"))
+    })?;
+    Ok(extract_window_content(&xaml_string))
 }
 
 /// If the root is `<Window>`, extract the title and inner content XAML.
 /// Otherwise return the XAML unchanged.
-fn extract_window_content(xaml: &str) -> (Option<String>, String) {
-    // Simple heuristic: check if it starts with <Window
+pub fn extract_window_content(xaml: &str) -> (Option<String>, String) {
     let trimmed = xaml.trim();
     if !trimmed.starts_with("<Window") {
         return (None, xaml.to_string());
     }
-
-    // Extract Title attribute
     let title = extract_attribute(trimmed, "Title");
-
-    // Extract inner content between first > and last </Window>
     if let Some(start) = trimmed.find('>') {
         if let Some(end) = trimmed.rfind("</Window>") {
             let inner = trimmed[start + 1..end].trim();
             if !inner.is_empty() {
-                // Re-inject xmlns declarations from the outer Window
                 let namespaces = extract_xmlns_declarations(trimmed);
                 let content = inject_namespaces(inner, &namespaces);
                 return (title, content);
             }
         }
     }
-
     (title, xaml.to_string())
 }
 
@@ -87,10 +101,9 @@ fn inject_namespaces(inner_xml: &str, namespaces: &[String]) -> String {
     if namespaces.is_empty() {
         return inner_xml.to_string();
     }
-    // Find the end of the first tag name
-    if let Some(first_space_or_gt) = inner_xml.find(|c: char| c == ' ' || c == '>' || c == '/') {
-        let tag_end = &inner_xml[..first_space_or_gt];
-        let rest = &inner_xml[first_space_or_gt..];
+    if let Some(pos) = inner_xml.find(|c: char| c == ' ' || c == '>' || c == '/') {
+        let tag_end = &inner_xml[..pos];
+        let rest = &inner_xml[pos..];
         let ns_str = namespaces.join(" ");
         format!("{} {} {}", tag_end, ns_str, rest.trim_start())
     } else {

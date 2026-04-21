@@ -5,7 +5,7 @@
     "start": "npx ts-node app/main.ts"
   },
   "dependencies": {
-    "winuidevkit": "^0.1.0"
+    "winuidevkit": "file:../../src/nodejs"
   },
   "devDependencies": {
     "ts-node": "^10.9.0",
