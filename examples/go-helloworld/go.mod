@@ -1,5 +1,7 @@
 module go-helloworld
 
-go 1.21
+go 1.22
 
-require github.com/user/winuidevkit-go v0.1.0
+require github.com/brflynn/WinUIDevKit/src/languagepacks/go v0.0.0
+
+replace github.com/brflynn/WinUIDevKit/src/languagepacks/go => ../../src/go

@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-winuidevkit = { path = "../../src/languagepacks/rust" }
-windows = { version = "0.58", features = ["Foundation"] }
+winuidevkit = { path = "../../src/rust" }
+windows-core = "0.58"

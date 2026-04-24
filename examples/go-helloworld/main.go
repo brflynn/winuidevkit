@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/user/winuidevkit-go/bootstrap"
-	"github.com/user/winuidevkit-go/winrt"
+	"github.com/brflynn/WinUIDevKit/src/languagepacks/go/bootstrap"
+	"github.com/brflynn/WinUIDevKit/src/languagepacks/go/winrt"
 )
 
 func main() {
